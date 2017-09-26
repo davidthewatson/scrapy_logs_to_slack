@@ -53,5 +53,7 @@ class SlackStats(object):
                 'fields': fields
             }
         ]
-        self.slack.chat.post_message(channel=str(self.channel[0]), text=None, icon_emoji=emoji, username=self.bot[0], attachments=attachments)
+        self.slack.chat.post_message(channel=str(self.channel[0]), text=None,
+                                     icon_emoji=emoji, username=self.bot[0],
+                                     attachments=attachments)
         return
