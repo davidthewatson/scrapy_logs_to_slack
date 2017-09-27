@@ -1,3 +1,4 @@
+from datetime import datetime
 from scrapy import signals
 from slacker import Slacker
 from scrapy.exceptions import NotConfigured
@@ -9,6 +10,8 @@ class SlackStats(object):
         self.slack = Slacker(slack_api_token)
         self.channel = channel
         self.bot = bot
+        self.start = datetime.now()
+        self.finish = None
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -25,8 +28,8 @@ class SlackStats(object):
     def start_stats(self, spider):
         attachments = [
             {
-                'title': '{} crawl started'.format(spider.name),
-                'fallback': 'Crawl has started',
+                'title': 'Crawl {} started at {}'.format(spider.name, str(self.start)),
+                'fallback': 'Crawler started',
                 'color': 'good',
             }
         ]
@@ -37,17 +40,20 @@ class SlackStats(object):
 
     def finish_stats(self, spider):
         spider_stats = spider.crawler.stats.get_stats()
-        if spider_stats['finish_reason'].encode('utf-8') == 'finished':
+        if spider_stats['finish_reason'] == 'finished':
             color = 'good'
             emoji = ':white_check_mark:'
         else:
             color = 'bad'
             emoji = ':no_entry_sign:'
-        fields = [{"title": k, "value": str(v), "short": True} for k, v in spider_stats.items()]
+        fields = [{"title": k[k.find('/') + 1:],
+                   "value": str(v),
+                   "short": True} for k, v in spider_stats.items()]
+        self.finish = datetime.now()
         attachments = [
             {
-                'title': '{} crawl finished.'.format(spider.name),
-                'fallback': 'Crawler has finished',
+                'title': 'Crawl {} finished at {} in {}'.format(spider.name, str(self.finish), str(self.finish - self.start)),
+                'fallback': 'Crawler finished',
                 'color': color,
                 'mrkdwn_in': ['text', 'pretext'],
                 'fields': fields
